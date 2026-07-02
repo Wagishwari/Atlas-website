@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlas Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --danger: #dc2626;
+            --success: #10b981;
+            --gray-900: #111827;
+            --gray-800: #1f2937;
+            --gray-700: #374151;
+            --gray-300: #d1d5db;
+            --gray-200: #e5e7eb;
+            --gray-100: #f3f4f6;
+            --gray-50: #f9fafb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            background: white;
+            padding: 2rem;
+            border-bottom: 1px solid var(--gray-200);
+            margin-bottom: 2rem;
+            border-radius: 0.5rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .stat-label {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Filter */
+        .filter-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--gray-200);
+            margin-bottom: 2rem;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group input {
+            padding: 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        /* Table */
+        .table-container {
+            background: white;
+            border-radius: 0.5rem;
+            border: 1px solid var(--gray-200);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        tr:hover {
+            background: var(--gray-50);
+        }
+
+        .action-cell {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray-600);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--gray-900);
+        }
+
+        .modal-text {
+            color: var(--gray-700);
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--primary);
+        }
+
+        .spinner {
+            border: 4px solid var(--gray-200);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Admin Key Input */
+        .auth-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--gray-200);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .auth-section input {
+            padding: 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            min-width: 300px;
+            margin-right: 1rem;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--danger);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .filter-group {
+                flex-direction: column;
+            }
+
+            .auth-section input {
+                min-width: 100%;
+                margin-right: 0;
+                margin-bottom: 1rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            td, th {
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-content">
+                <h1>🌍 Atlas Admin Dashboard</h1>
+                <div class="header-actions">
+                    <button class="btn-success" onclick="exportCSV()">📥 Export CSV</button>
+                    <button class="btn-primary" onclick="refreshData()">🔄 Refresh</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Authentication -->
+        <div class="auth-section" id="authSection">
+            <h2>Admin Access</h2>
+            <p style="margin-bottom: 1rem; color: var(--gray-600);">Enter your admin key to view signups</p>
+            <input 
+                type="password" 
+                id="adminKey" 
+                placeholder="Enter admin key"
+                onkeypress="if(event.key === 'Enter') loadSignups()"
+            >
+            <button class="btn-primary" onclick="loadSignups()">Unlock Dashboard</button>
+        </div>
+
+        <!-- Dashboard (hidden until authenticated) -->
+        <div id="dashboard" style="display: none;">
+            <!-- Stats -->
+            <div class="stats" id="stats">
+                <div class="stat-card">
+                    <div class="stat-label">Total Signups</div>
+                    <div class="stat-value" id="totalCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Last 7 Days</div>
+                    <div class="stat-value" id="lastWeek">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Last 24 Hours</div>
+                    <div class="stat-value" id="lastDay">0</div>
+                </div>
+            </div>
+
+            <!-- Filter -->
+            <div class="filter-section">
+                <div class="filter-group">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Search by email..."
+                        onkeyup="filterTable()"
+                    >
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-container">
+                <table id="signupsTable">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Signup Date</th>
+                            <th>Source</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <div class="empty-state-icon">📭</div>
+                    <p>No signups yet</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <h3 class="modal-title">Delete Email?</h3>
+            <p class="modal-text">Are you sure you want to delete <strong id="deleteEmail"></strong>? This cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn-danger" onclick="confirmDelete()">Delete</button>
+                <button onclick="closeModal()" style="background: var(--gray-300); color: var(--gray-900);">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allSignups = [];
+        let emailToDelete = null;
+
+        // Load signups from API
+        async function loadSignups() {
+            const adminKey = document.getElementById('adminKey').value;
+            
+            if (!adminKey) {
+                showToast('Please enter admin key', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/admin/signups?key=${encodeURIComponent(adminKey)}`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    showToast('Invalid admin key', 'error');
+                    return;
+                }
+
+                allSignups = data.signups || [];
+                document.getElementById('authSection').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                
+                renderTable();
+                updateStats();
+                showToast('Dashboard loaded successfully', 'success');
+
+                // Store admin key for later use
+                window.adminKey = adminKey;
+
+            } catch (error) {
+                showToast('Error loading data', 'error');
+                console.error(error);
+            }
+        }
+
+        // Render table
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            const emptyState = document.getElementById('emptyState');
+
+            if (allSignups.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            tbody.innerHTML = allSignups.map(signup => `
+                <tr>
+                    <td><strong>${signup.email}</strong></td>
+                    <td>${new Date(signup.createdAt).toLocaleString()}</td>
+                    <td><span style="background: #dbeafe; color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 0.25rem;">${signup.source || 'website'}</span></td>
+                    <td>
+                        <div class="action-cell">
+                            <button class="btn-danger" onclick="deleteEmail('${signup.email}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Filter table
+        function filterTable() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allSignups.filter(s => s.email.toLowerCase().includes(search));
+            
+            const tbody = document.getElementById('tableBody');
+            const emptyState = document.getElementById('emptyState');
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            tbody.innerHTML = filtered.map(signup => `
+                <tr>
+                    <td><strong>${signup.email}</strong></td>
+                    <td>${new Date(signup.createdAt).toLocaleString()}</td>
+                    <td><span style="background: #dbeafe; color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 0.25rem;">${signup.source || 'website'}</span></td>
+                    <td>
+                        <div class="action-cell">
+                            <button class="btn-danger" onclick="deleteEmail('${signup.email}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Update stats
+        function updateStats() {
+            const now = new Date();
+            const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+            const lastWeek = allSignups.filter(s => new Date(s.createdAt) > oneWeekAgo).length;
+            const lastDay = allSignups.filter(s => new Date(s.createdAt) > oneDayAgo).length;
+
+            document.getElementById('totalCount').textContent = allSignups.length;
+            document.getElementById('lastWeek').textContent = lastWeek;
+            document.getElementById('lastDay').textContent = lastDay;
+        }
+
+        // Delete email
+        function deleteEmail(email) {
+            emailToDelete = email;
+            document.getElementById('deleteEmail').textContent = email;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        // Confirm delete
+        async function confirmDelete() {
+            if (!emailToDelete || !window.adminKey) return;
+
+            try {
+                const response = await fetch(`/api/admin/signups/${encodeURIComponent(emailToDelete)}?key=${encodeURIComponent(window.adminKey)}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    allSignups = allSignups.filter(s => s.email !== emailToDelete);
+                    renderTable();
+                    updateStats();
+                    showToast('Email deleted', 'success');
+                } else {
+                    showToast('Error deleting email', 'error');
+                }
+            } catch (error) {
+                showToast('Error deleting email', 'error');
+                console.error(error);
+            }
+
+            closeModal();
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            emailToDelete = null;
+        }
+
+        // Export CSV
+        async function exportCSV() {
+            if (!window.adminKey) return;
+
+            try {
+                const response = await fetch(`/api/admin/export-csv?key=${encodeURIComponent(window.adminKey)}`);
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'atlas-signups.csv';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                showToast('CSV exported successfully', 'success');
+            } catch (error) {
+                showToast('Error exporting CSV', 'error');
+                console.error(error);
+            }
+        }
+
+        // Refresh data
+        function refreshData() {
+            loadSignups();
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Close modal on background click
+        document.getElementById('deleteModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('deleteModal')) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
