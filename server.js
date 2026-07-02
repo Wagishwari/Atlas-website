@@ -20,9 +20,8 @@ let emailsCollection = null;
 async function connectMongoDB() {
   try {
     if (!process.env.MONGODB_URI) {
-      console.log('⚠️  MongoDB URI not found. Using local JSON file for storage.');
-      return null;
-    }
+  throw new Error('MONGODB_URI is missing');
+}
     
     const client = new MongoClient(process.env.MONGODB_URI);
     await client.connect();
@@ -59,7 +58,7 @@ function saveEmail(emailObj) {
   const emails = loadEmails();
   if (!emails.find(e => e.email === emailObj.email)) {
     emails.push(emailObj);
-    fs.writeFileSync(storageFile, JSON.stringify(emails, null, 2));
+    console.log("Local JSON saving disabled on Vercel");
   }
 }
 
@@ -112,8 +111,11 @@ app.post('/api/early-access', async (req, res) => {
         throw error;
       }
     } else {
-      saveEmail(emailObj);
-    }
+  return res.status(500).json({
+    success: false,
+    message: "MongoDB not connected"
+  });
+}
 
     // Send confirmation email
     if (transporter) {
