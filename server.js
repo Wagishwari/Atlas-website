@@ -34,9 +34,9 @@ async function connectMongoDB() {
     console.log('✓ Connected to MongoDB');
     return db;
   } catch (error) {
-    console.log('⚠️  MongoDB connection failed. Using local JSON file.');
-    return null;
-  }
+  console.error('MongoDB connection failed:', error);
+  throw error;
+}
 }
 
 // Local JSON file storage (fallback)
@@ -101,7 +101,12 @@ app.post('/api/early-access', async (req, res) => {
     };
 
     // Save to MongoDB if connected, else local file
-    if (emailsCollection) {
+
+if (!emailsCollection) {
+    await connectMongoDB();
+}
+
+if (emailsCollection) {
       try {
         await emailsCollection.insertOne(emailObj);
       } catch (error) {
