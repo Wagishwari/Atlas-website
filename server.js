@@ -18,6 +18,9 @@ let db = null;
 let emailsCollection = null;
 
 async function connectMongoDB() {
+  console.log('⚠️  Using local JSON file for storage.');
+  return null;
+}
   try {
     if (!process.env.MONGODB_URI) {
   throw new Error('MONGODB_URI is missing');
@@ -37,7 +40,7 @@ async function connectMongoDB() {
   console.error('MongoDB connection failed:', error);
   throw error;
 }
-}
+
 
 // Local JSON file storage (fallback)
 const storageFile = path.join(__dirname, 'emails.json');
