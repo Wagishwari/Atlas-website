@@ -1,8 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
-const { MongoClient } = require('mongodb');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
@@ -11,27 +11,35 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// ---- Local JSON fallback storage ----
+const DATA_FILE = path.join(__dirname, 'signups.json');
+
+function readLocalSignups() {
+  try {
+    if (!fs.existsSync(DATA_FILE)) {
+      fs.writeFileSync(DATA_FILE, '[]');
+    }
+    const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error('Failed to read local signups file:', error);
+    return [];
+  }
+}
+
+function writeLocalSignups(signups) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(signups, null, 2));
+}
+
+// ---- MongoDB (stubbed) ----
+// Returns null so the app always falls back to local JSON storage.
+// To re-enable MongoDB later, restore the real connection logic here
+// and make sure MONGODB_URI is set in your environment variables.
 let emailsCollection = null;
 
 async function connectMongoDB() {
-  try {
-    if (!process.env.MONGODB_URI) {
-      throw new Error('MONGODB_URI is missing');
-    }
-
-    const client = new MongoClient(process.env.MONGODB_URI);
-    await client.connect();
-
-    const db = client.db('atlas');
-    emailsCollection = db.collection('early_access');
-
-    await emailsCollection.createIndex({ email: 1 }, { unique: true });
-
-    console.log('Connected to MongoDB');
-  } catch (error) {
-    console.error('MongoDB connection failed:', error);
-    throw error;
-  }
+  console.log('MongoDB is disabled, using local JSON file storage');
+  return null;
 }
 
 let transporter = null;
@@ -64,6 +72,7 @@ app.post('/api/early-access', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid email' });
     }
 
+    // Always attempt Mongo first (currently stubbed to return null)
     if (!emailsCollection) {
       await connectMongoDB();
     }
@@ -74,16 +83,33 @@ app.post('/api/early-access', async (req, res) => {
       source: 'website'
     };
 
-    try {
-      await emailsCollection.insertOne(emailObj);
-    } catch (error) {
-      if (error.code === 11000) {
+    if (emailsCollection) {
+      // MongoDB path (only runs if you re-enable Mongo later)
+      try {
+        await emailsCollection.insertOne(emailObj);
+      } catch (error) {
+        if (error.code === 11000) {
+          return res.status(400).json({
+            success: false,
+            message: 'Email already registered'
+          });
+        }
+        throw error;
+      }
+    } else {
+      // Local JSON fallback path
+      const signups = readLocalSignups();
+      const alreadyExists = signups.some(s => s.email.toLowerCase() === email.toLowerCase());
+
+      if (alreadyExists) {
         return res.status(400).json({
           success: false,
           message: 'Email already registered'
         });
       }
-      throw error;
+
+      signups.push(emailObj);
+      writeLocalSignups(signups);
     }
 
     if (transporter) {
@@ -136,10 +162,18 @@ app.get('/api/admin/signups', async (req, res) => {
       await connectMongoDB();
     }
 
-    const signups = await emailsCollection
-      .find({})
-      .sort({ createdAt: -1 })
-      .toArray();
+    let signups;
+
+    if (emailsCollection) {
+      signups = await emailsCollection
+        .find({})
+        .sort({ createdAt: -1 })
+        .toArray();
+    } else {
+      signups = readLocalSignups().sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+    }
 
     res.json({
       success: true,
@@ -162,6 +196,7 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date()
   });
 });
+
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
 
@@ -170,4 +205,5 @@ if (require.main === module) {
     await connectMongoDB();
   });
 }
+
 module.exports = app;
