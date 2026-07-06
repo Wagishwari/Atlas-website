@@ -162,5 +162,12 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date()
   });
 });
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
 
+  app.listen(PORT, async () => {
+    console.log(`Atlas server running on http://localhost:${PORT}`);
+    await connectMongoDB();
+  });
+}
 module.exports = app;
