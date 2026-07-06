@@ -1,8 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
+const { MongoClient } = require('mongodb');
 const path = require('path');
-const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
@@ -11,35 +11,29 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// ---- Local JSON fallback storage ----
-const DATA_FILE = path.join(__dirname, 'signups.json');
+let cachedClient = null;
+let cachedCollection = null;
 
-function readLocalSignups() {
-  try {
-    if (!fs.existsSync(DATA_FILE)) {
-      fs.writeFileSync(DATA_FILE, '[]');
-    }
-    const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-    return JSON.parse(raw);
-  } catch (error) {
-    console.error('Failed to read local signups file:', error);
-    return [];
+async function getEmailsCollection() {
+  if (cachedCollection) {
+    return cachedCollection;
   }
-}
 
-function writeLocalSignups(signups) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(signups, null, 2));
-}
+  if (!process.env.MONGODB_URI) {
+    throw new Error('MONGODB_URI is missing from environment variables');
+  }
 
-// ---- MongoDB (stubbed) ----
-// Returns null so the app always falls back to local JSON storage.
-// To re-enable MongoDB later, restore the real connection logic here
-// and make sure MONGODB_URI is set in your environment variables.
-let emailsCollection = null;
+  if (!cachedClient) {
+    cachedClient = new MongoClient(process.env.MONGODB_URI);
+    await cachedClient.connect();
+    console.log('Connected to MongoDB');
+  }
 
-async function connectMongoDB() {
-  console.log('MongoDB is disabled, using local JSON file storage');
-  return null;
+  const db = cachedClient.db('atlas');
+  cachedCollection = db.collection('early_access');
+  await cachedCollection.createIndex({ email: 1 }, { unique: true });
+
+  return cachedCollection;
 }
 
 let transporter = null;
@@ -72,10 +66,7 @@ app.post('/api/early-access', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid email' });
     }
 
-    // Always attempt Mongo first (currently stubbed to return null)
-    if (!emailsCollection) {
-      await connectMongoDB();
-    }
+    const emailsCollection = await getEmailsCollection();
 
     const emailObj = {
       email,
@@ -83,33 +74,16 @@ app.post('/api/early-access', async (req, res) => {
       source: 'website'
     };
 
-    if (emailsCollection) {
-      // MongoDB path (only runs if you re-enable Mongo later)
-      try {
-        await emailsCollection.insertOne(emailObj);
-      } catch (error) {
-        if (error.code === 11000) {
-          return res.status(400).json({
-            success: false,
-            message: 'Email already registered'
-          });
-        }
-        throw error;
-      }
-    } else {
-      // Local JSON fallback path
-      const signups = readLocalSignups();
-      const alreadyExists = signups.some(s => s.email.toLowerCase() === email.toLowerCase());
-
-      if (alreadyExists) {
+    try {
+      await emailsCollection.insertOne(emailObj);
+    } catch (error) {
+      if (error.code === 11000) {
         return res.status(400).json({
           success: false,
           message: 'Email already registered'
         });
       }
-
-      signups.push(emailObj);
-      writeLocalSignups(signups);
+      throw error;
     }
 
     if (transporter) {
@@ -158,22 +132,12 @@ app.get('/api/admin/signups', async (req, res) => {
       });
     }
 
-    if (!emailsCollection) {
-      await connectMongoDB();
-    }
+    const emailsCollection = await getEmailsCollection();
 
-    let signups;
-
-    if (emailsCollection) {
-      signups = await emailsCollection
-        .find({})
-        .sort({ createdAt: -1 })
-        .toArray();
-    } else {
-      signups = readLocalSignups().sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-      );
-    }
+    const signups = await emailsCollection
+      .find({})
+      .sort({ createdAt: -1 })
+      .toArray();
 
     res.json({
       success: true,
@@ -200,10 +164,10 @@ app.get('/api/health', (req, res) => {
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
 
-  app.listen(PORT, async () => {
+  app.listen(PORT, () => {
     console.log(`Atlas server running on http://localhost:${PORT}`);
-    await connectMongoDB();
   });
 }
 
 module.exports = app;
+
