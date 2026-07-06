@@ -3,6 +3,8 @@ const cors = require('cors');
 const nodemailer = require('nodemailer');
 const { MongoClient } = require('mongodb');
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
 require('dotenv').config();
 
 const app = express();
@@ -11,16 +13,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// ---------- MongoDB (used only if MONGODB_URI is set) ----------
+
 let cachedClient = null;
 let cachedCollection = null;
 
 async function getEmailsCollection() {
   if (cachedCollection) {
     return cachedCollection;
-  }
-
-  if (!process.env.MONGODB_URI) {
-    throw new Error('MONGODB_URI is missing from environment variables');
   }
 
   if (!cachedClient) {
@@ -36,6 +36,65 @@ async function getEmailsCollection() {
   return cachedCollection;
 }
 
+// ---------- Local JSON fallback (used if MONGODB_URI is NOT set) ----------
+// NOTE: On Vercel, only /tmp is writable, and it can be wiped between
+// invocations/deployments. This fallback is fine for quick testing,
+// but for real production signups you'll want a database again.
+
+const isVercel = !!process.env.VERCEL;
+const DATA_FILE = isVercel
+  ? path.join(os.tmpdir(), 'atlas-emails.json')
+  : path.join(__dirname, 'data', 'emails.json');
+
+function readLocalEmails() {
+  try {
+    if (!fs.existsSync(DATA_FILE)) return [];
+    const raw = fs.readFileSync(DATA_FILE, 'utf8');
+    return raw ? JSON.parse(raw) : [];
+  } catch (err) {
+    console.error('Error reading local email store:', err);
+    return [];
+  }
+}
+
+function writeLocalEmails(emails) {
+  const dir = path.dirname(DATA_FILE);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(DATA_FILE, JSON.stringify(emails, null, 2));
+}
+
+// ---------- Unified storage functions used by the routes ----------
+
+async function saveEmail(emailObj) {
+  if (process.env.MONGODB_URI) {
+    const collection = await getEmailsCollection();
+    await collection.insertOne(emailObj);
+    return emailObj;
+  }
+
+  const emails = readLocalEmails();
+  if (emails.some(e => e.email === emailObj.email)) {
+    const err = new Error('Duplicate email');
+    err.code = 11000;
+    throw err;
+  }
+  emails.push(emailObj);
+  writeLocalEmails(emails);
+  return emailObj;
+}
+
+async function getAllEmails() {
+  if (process.env.MONGODB_URI) {
+    const collection = await getEmailsCollection();
+    return collection.find({}).sort({ createdAt: -1 }).toArray();
+  }
+
+  const emails = readLocalEmails();
+  return emails.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+// ---------- Email transporter ----------
+
 let transporter = null;
 
 if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
@@ -49,6 +108,8 @@ if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
     }
   });
 }
+
+// ---------- Routes ----------
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -66,8 +127,6 @@ app.post('/api/early-access', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid email' });
     }
 
-    const emailsCollection = await getEmailsCollection();
-
     const emailObj = {
       email,
       createdAt: new Date(),
@@ -75,7 +134,7 @@ app.post('/api/early-access', async (req, res) => {
     };
 
     try {
-      await emailsCollection.insertOne(emailObj);
+      await saveEmail(emailObj);
     } catch (error) {
       if (error.code === 11000) {
         return res.status(400).json({
@@ -132,12 +191,7 @@ app.get('/api/admin/signups', async (req, res) => {
       });
     }
 
-    const emailsCollection = await getEmailsCollection();
-
-    const signups = await emailsCollection
-      .find({})
-      .sort({ createdAt: -1 })
-      .toArray();
+    const signups = await getAllEmails();
 
     res.json({
       success: true,
@@ -170,4 +224,3 @@ if (require.main === module) {
 }
 
 module.exports = app;
-
