@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlas - AI Travel Planning Made Easy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --teal: #14b8a6;
+            --gray-900: #111827;
+            --gray-800: #1f2937;
+            --gray-700: #374151;
+            --gray-600: #4b5563;
+            --gray-300: #d1d5db;
+            --gray-200: #e5e7eb;
+            --gray-100: #f3f4f6;
+            --gray-50: #f9fafb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-800);
+            background: var(--gray-50);
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--gray-700);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .cta-button {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .cta-button:hover {
+            background: var(--primary-dark);
+        }
+
+        .cta-button-secondary {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 0.65rem 1.4rem;
+        }
+
+        .cta-button-secondary:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 6rem 2rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            color: var(--gray-900);
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--gray-600);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 4rem;
+        }
+
+        .hero-buttons .cta-button {
+            font-size: 1.1rem;
+            padding: 1rem 2rem;
+        }
+
+        /* Features */
+        .features {
+            max-width: 1200px;
+            margin: 4rem auto;
+            padding: 0 2rem;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: var(--gray-900);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 1px solid var(--gray-200);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+            color: var(--gray-900);
+        }
+
+        .feature-card p {
+            color: var(--gray-600);
+            font-size: 0.95rem;
+        }
+
+        /* How it Works */
+        .how-it-works {
+            max-width: 1200px;
+            margin: 6rem auto;
+            padding: 3rem 2rem;
+            background: white;
+            border-radius: 1.5rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .how-it-works h2 {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            color: var(--gray-900);
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .step {
+            text-align: center;
+        }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--teal));
+            color: white;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .step h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--gray-900);
+        }
+
+        .step p {
+            color: var(--gray-600);
+        }
+
+        /* Pricing */
+        .pricing {
+            max-width: 1200px;
+            margin: 6rem auto;
+            padding: 0 2rem;
+        }
+
+        .pricing h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: var(--gray-900);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .pricing-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            border: 1px solid var(--gray-200);
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .pricing-card.featured {
+            border: 2px solid var(--primary);
+            box-shadow: 0 10px 40px rgba(37, 99, 235, 0.2);
+            transform: scale(1.05);
+        }
+
+        .pricing-card.featured .badge {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .pricing-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--gray-900);
+        }
+
+        .price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 1rem 0;
+        }
+
+        .price-period {
+            color: var(--gray-600);
+            font-size: 0.95rem;
+        }
+
+        .features-list {
+            list-style: none;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .features-list li {
+            padding: 0.75rem 0;
+            color: var(--gray-700);
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .features-list li:before {
+            content: "✓ ";
+            color: var(--teal);
+            font-weight: 700;
+            margin-right: 0.5rem;
+        }
+
+        .pricing-card .cta-button {
+            width: 100%;
+            margin-top: 1.5rem;
+        }
+
+        /* FAQ */
+        .faq {
+            max-width: 800px;
+            margin: 6rem auto;
+            padding: 0 2rem;
+        }
+
+        .faq h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: var(--gray-900);
+        }
+
+        .faq-item {
+            background: white;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--gray-900);
+            background: white;
+            transition: background 0.3s;
+            border: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .faq-question:hover {
+            background: var(--gray-50);
+        }
+
+        .faq-answer {
+            padding: 0 1.5rem 1.5rem;
+            color: var(--gray-700);
+            display: none;
+        }
+
+        .faq-answer.active {
+            display: block;
+        }
+
+        .faq-toggle {
+            font-size: 1.5rem;
+            transition: transform 0.3s;
+        }
+
+        .faq-toggle.active {
+            transform: rotate(180deg);
+        }
+
+        /* Early Access Form */
+        .early-access {
+            max-width: 600px;
+            margin: 6rem auto;
+            padding: 3rem;
+            background: linear-gradient(135deg, var(--primary), var(--teal));
+            border-radius: 1.5rem;
+            color: white;
+            text-align: center;
+        }
+
+        .early-access h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .early-access p {
+            margin-bottom: 2rem;
+            font-size: 1.05rem;
+            opacity: 0.95;
+        }
+
+        .form-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .form-group button {
+            padding: 0.75rem 2rem;
+            background: var(--gray-900);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .form-group button:hover {
+            background: var(--gray-800);
+        }
+
+        .form-group button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .form-message {
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            opacity: 0.9;
+        }
+
+        .form-error {
+            color: #fca5a5;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--gray-900);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-top: 6rem;
+        }
+
+        footer p {
+            margin-bottom: 1rem;
+        }
+
+        footer a {
+            color: var(--teal);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+        }
+
+        .toast.success {
+            border-left: 4px solid #10b981;
+            color: #10b981;
+        }
+
+        .toast.error {
+            border-left: 4px solid #ef4444;
+            color: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .pricing-card.featured {
+                transform: scale(1);
+            }
+
+            .form-group {
+                flex-direction: column;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+            }
+
+            .hero-buttons .cta-button {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero, .features, .how-it-works, .pricing, .faq, .early-access {
+            animation: fadeIn 0.6s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">🌍 Atlas</div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#faq">FAQ</a>
+            <button class="cta-button" onclick="document.querySelector('.early-access').scrollIntoView({behavior: 'smooth'})">Join Early Access</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Plan Your Perfect Trip in Minutes</h1>
+        <p>Atlas uses AI to create personalized itineraries with flights, hotels, trains, and 24/7 guidance—all within your budget.</p>
+        <div class="hero-buttons">
+            <button class="cta-button" onclick="document.querySelector('.early-access').scrollIntoView({behavior: 'smooth'})">Get Early Access</button>
+            <button class="cta-button cta-button-secondary" onclick="alert('Coming Soon!')">Watch Demo</button>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features" id="features">
+        <h2>Why Choose Atlas?</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>AI-Powered Planning</h3>
+                <p>Smart algorithms create personalized itineraries based on your budget, preferences, and travel style.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>Budget Smart</h3>
+                <p>Every recommendation respects your budget. Real-time cost tracking ensures you never overspend.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3>All-in-One Booking</h3>
+                <p>Flights, hotels, trains, and activities—book everything from one app without juggling multiple websites.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🗺️</div>
+                <h3>Real-Time Guide</h3>
+                <p>Your personal AI guide provides live navigation, recommendations, and tips during your entire trip.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>Group Planning</h3>
+                <p>Planning with friends? Collaborate, share costs, and keep everyone on the same page.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3>Secure & Trusted</h3>
+                <p>Your data is secure. We partner with verified travel providers and payment gateways.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works">
+        <h2>How Atlas Works</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Tell Us Your Trip</h3>
+                <p>Share where you're going, budget, duration, and travel style.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>AI Creates Itinerary</h3>
+                <p>Our AI generates a personalized day-by-day plan with all details.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Book Everything</h3>
+                <p>Flights, hotels, trains—book all in one place with secure payments.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <h3>Enjoy Your Trip</h3>
+                <p>Your AI guide guides you every step of the way with real-time recommendations.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="pricing" id="pricing">
+        <h2>Simple, Transparent Pricing</h2>
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <h3>Free</h3>
+                <div class="price">₹0</div>
+                <div class="price-period">Forever</div>
+                <ul class="features-list">
+                    <li>Basic itineraries</li>
+                    <li>Limited to 5 trips/year</li>
+                    <li>Standard recommendations</li>
+                </ul>
+                <button class="cta-button cta-button-secondary">Start Free</button>
+            </div>
+            <div class="pricing-card featured">
+                <div class="badge">Most Popular</div>
+                <h3>Pro</h3>
+                <div class="price">₹299</div>
+                <div class="price-period">/month</div>
+                <ul class="features-list">
+                    <li>Unlimited itineraries</li>
+                    <li>Real-time AI guide</li>
+                    <li>Group planning</li>
+                    <li>Priority support</li>
+                </ul>
+                <button class="cta-button">Start 7-Day Free Trial</button>
+            </div>
+            <div class="pricing-card">
+                <h3>Premium</h3>
+                <div class="price">₹799</div>
+                <div class="price-period">/month</div>
+                <ul class="features-list">
+                    <li>Everything in Pro</li>
+                    <li>24/7 personal guide</li>
+                    <li>Travel insurance</li>
+                    <li>Exclusive deals</li>
+                </ul>
+                <button class="cta-button cta-button-secondary">Start 7-Day Free Trial</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq" id="faq">
+        <h2>Frequently Asked Questions</h2>
+        
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFAQ(this)">
+                <span>How does Atlas create personalized itineraries?</span>
+                <span class="faq-toggle">▼</span>
+            </button>
+            <div class="faq-answer">
+                Atlas uses advanced AI to analyze your budget, preferences, travel style, and destination to create a detailed day-by-day itinerary. The AI considers factors like weather, local events, distance between attractions, and authentic experiences.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFAQ(this)">
+                <span>What payment methods does Atlas accept?</span>
+                <span class="faq-toggle">▼</span>
+            </button>
+            <div class="faq-answer">
+                We accept credit cards, debit cards, UPI, net banking, and all major digital payment methods through our secure Razorpay integration. All transactions are encrypted and PCI-compliant.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFAQ(this)">
+                <span>Can I book flights and hotels directly through Atlas?</span>
+                <span class="faq-toggle">▼</span>
+            </button>
+            <div class="faq-answer">
+                Yes! Atlas partners with major airlines, hotel chains, and train operators. You can search, compare, and book directly through our platform. We handle everything for you in one place.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFAQ(this)">
+                <span>Is there a free version?</span>
+                <span class="faq-toggle">▼</span>
+            </button>
+            <div class="faq-answer">
+                Absolutely! Our Free plan includes basic itinerary planning (limited to 5 trips per year). Upgrade to Pro or Premium to unlock unlimited itineraries, real-time guide, and 24/7 support.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFAQ(this)">
+                <span>What countries does Atlas support?</span>
+                <span class="faq-toggle">▼</span>
+            </button>
+            <div class="faq-answer">
+                We're launching India-first in May 2027, covering all states and popular destinations. Global expansion will follow shortly after. Join our early access to shape our roadmap!
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFAQ(this)">
+                <span>Can I cancel my subscription anytime?</span>
+                <span class="faq-toggle">▼</span>
+            </button>
+            <div class="faq-answer">
+                Yes. You can cancel your subscription anytime with no questions asked. No hidden fees, no long-term contracts. We believe in transparency.
+            </div>
+        </div>
+    </section>
+
+    <!-- Early Access Form -->
+    <section class="early-access">
+        <h2>Join Our Launch List</h2>
+        <p>Be among the first to experience Atlas. Get exclusive early-bird pricing and lifetime perks.</p>
+        <form onsubmit="handleEarlyAccess(event)">
+            <div class="form-group">
+                <input 
+                    type="email" 
+                    id="emailInput"
+                    placeholder="Your email address" 
+                    required
+                >
+                <button type="submit" id="submitBtn">Join Now</button>
+            </div>
+            <div class="form-error" id="formError"></div>
+            <div class="form-message">✓ We'll never spam you. Unsubscribe anytime.</div>
+        </form>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Atlas Travel. All rights reserved.</p>
+        <p>
+            <a href="#privacy">Privacy Policy</a> | 
+            <a href="#terms">Terms of Service</a> | 
+            <a href="#contact">Contact</a>
+        </p>
+        <p style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.7;">
+            Made with ❤️ for adventurers | Launching May 7, 2027
+        </p>
+    </footer>
+
+    <script>
+        function toggleFAQ(element) {
+            const answer = element.nextElementSibling;
+            const toggle = element.querySelector('.faq-toggle');
+            
+            document.querySelectorAll('.faq-answer').forEach(a => {
+                if (a !== answer) {
+                    a.classList.remove('active');
+                    a.previousElementSibling.querySelector('.faq-toggle').classList.remove('active');
+                }
+            });
+            
+            answer.classList.toggle('active');
+            toggle.classList.toggle('active');
+        }
+
+        async function handleEarlyAccess(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('emailInput').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const formError = document.getElementById('formError');
+            
+            formError.textContent = '';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Joining...';
+
+            try {
+                const response = await fetch('/api/early-access', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('✓ Thanks for joining! Check your email for confirmation.', 'success');
+                    document.getElementById('emailInput').value = '';
+                    submitBtn.textContent = 'Join Now';
+                    submitBtn.disabled = false;
+                } else {
+                    formError.textContent = data.message || 'Something went wrong. Please try again.';
+                    submitBtn.textContent = 'Join Now';
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                formError.textContent = 'Error joining. Please try again.';
+                submitBtn.textContent = 'Join Now';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Smooth scroll for links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href !== '#' && document.querySelector(href)) {
+                    e.preventDefault();
+                    document.querySelector(href).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
